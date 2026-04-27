@@ -1,0 +1,64 @@
+# WebSocket Listener Configuration
+name: "WebSocket Listener"
+type: "ws"
+version: "1.0"
+
+# Listener settings
+listener:
+  bind_address: "0.0.0.0"
+  bind_port: 8443
+  use_ssl: true
+  cert_file: "server.crt"
+  key_file: "server.key"
+
+# WebSocket settings
+websocket:
+  path: "/ws"
+  subprotocol: "chat"  # Optional: negotiate subprotocol
+  ping_interval: 30    # seconds
+  ping_timeout: 10     # seconds
+  max_message_size: 10485760  # 10MB
+
+# Authentication
+auth:
+  required: true
+  token_header: "X-Auth-Token"
+  token_validity: 3600  # seconds
+
+# Encryption
+encryption:
+  algorithm: "aes-256-gcm"
+  key_derivation: "hkdf-sha256"
+  key_rotation: 3600  # Rotate session key every hour
+
+# Traffic obfuscation
+obfuscation:
+  enabled: true
+  # Message framing
+  frame_type: "binary"  # binary or text
+  # Add random padding
+  padding:
+    enabled: true
+    min_size: 0
+    max_size: 64
+  # Masking key (for WebSocket protocol compliance)
+  masking: true
+
+# Jitter settings
+jitter:
+  min_interval: 30
+  max_interval: 60
+  percent: 20
+
+# Rate limiting
+rate_limit:
+  max_connections: 100
+  messages_per_minute: 60
+  bytes_per_minute: 10485760  # 10MB
+
+# Logging
+logging:
+  enabled: true
+  level: "info"  # debug, info, warn, error
+  log_connections: true
+  log_messages: false  # Don't log message content

